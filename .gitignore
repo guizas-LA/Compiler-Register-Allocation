@@ -1,0 +1,33 @@
+# --- Compiled Binaries & Objects ---
+*.o
+*.obj
+*.exe
+*.out
+*.app
+
+# --- Doxygen Output ---
+html/
+latex/
+docs/
+doxygen_sqlite3.db
+Doxyfile
+
+
+# --- Build Systems ---
+cmake-build-debug/
+cmake-build-release/
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+
+# --- IDEs & Editors ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- OS generated files ---
+.DS_Store
+Thumbs.db
+
