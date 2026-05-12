@@ -245,15 +245,28 @@ void buildInterferenceGraph(const std::vector<Web> &webs, Graph<int> &graph) {
 
     for (size_t i = 0; i < webs.size(); i++) {
         for (size_t j = i + 1; j < webs.size(); j++) {
-            bool overlaps = false;
-            for (int line : webs[i].liveLines) {
-                if (webs[j].liveLines.count(line)) {
-                    overlaps = true;
+            bool interferes = false;
+            for (const ProgramPoint &left : webs[i].points) {
+                for (const ProgramPoint &right : webs[j].points) {
+                    if (left.line != right.line) continue;
+
+                    bool leftEndsOnly = left.ends && !left.begins;
+                    bool leftBeginsOnly = left.begins && !left.ends;
+                    bool rightEndsOnly = right.ends && !right.begins;
+                    bool rightBeginsOnly = right.begins && !right.ends;
+                    bool onlyTouchesAtUseThenDefinition = (leftEndsOnly && rightBeginsOnly) || (rightEndsOnly && leftBeginsOnly);
+
+                    if (!onlyTouchesAtUseThenDefinition) {
+                        interferes = true;
+                    }
+                    break;
+                }
+                if (interferes) {
                     break;
                 }
             }
 
-            if (overlaps) {
+            if (interferes) {
                 graph.addEdge(webs[i].id, webs[j].id, 1);
                 graph.addEdge(webs[j].id, webs[i].id, 1);
             }
@@ -275,20 +288,51 @@ std::map<int, std::set<int>> graphToInterferenceMap(const Graph<int> &graph) {
     return interference;
 }
 
-bool colorWithN(const std::vector<Web> &webs, const Graph<int> &graph, int colors, std::map<int, int> &assignment) {
-    std::map<int, std::set<int>> interference = graphToInterferenceMap(graph);
-    std::vector<int> order;
-    for (const Web &web : webs) order.push_back(web.id);
+static int activeDegree(int webId, const std::map<int, std::set<int>> &interference, const std::set<int> &active) {
+    int degree = 0;
+    for (int neighbor : interference.at(webId)) {
+        if (active.count(neighbor)) degree++;
+    }
+    return degree;
+}
 
-    std::sort(order.begin(), order.end(), [&](int a, int b) {
-        size_t degreeA = interference.at(a).size();
-        size_t degreeB = interference.at(b).size();
-        if (degreeA != degreeB) return degreeA > degreeB;
-        return a < b;
-    });
+bool colorWithN(const std::vector<Web> &webs, const Graph<int> &graph, int colors, const std::set<int> &excludedWebs, std::map<int, int> &assignment) {
+    std::map<int, std::set<int>> interference = graphToInterferenceMap(graph);
+    std::set<int> active;
+    std::vector<int> stack;
+
+    for (const Web &web : webs) {
+        if (!excludedWebs.count(web.id)) {
+            active.insert(web.id);
+        }
+    }
+
+    while (!active.empty()) {
+        int selected = -1;
+        int selectedDegree = -1;
+
+        for (int webId : active) {
+            int degree = activeDegree(webId, interference, active);
+            if (degree < colors && (selected == -1 || degree < selectedDegree || (degree == selectedDegree && webId < selected))) {
+                selected = webId;
+                selectedDegree = degree;
+            }
+        }
+
+        if (selected == -1) {
+            assignment.clear();
+            return false;
+        }
+
+        active.erase(selected);
+        stack.push_back(selected);
+    }
 
     assignment.clear();
-    for (int webId : order) {
+    while (!stack.empty()) {
+        int webId = stack.back();
+        stack.pop_back();
+
         std::set<int> unavailable;
         for (int neighbor : interference.at(webId)) {
             if (assignment.count(neighbor)) unavailable.insert(assignment[neighbor]);
@@ -312,6 +356,121 @@ bool colorWithN(const std::vector<Web> &webs, const Graph<int> &graph, int color
     return true;
 }
 
+bool colorWithN(const std::vector<Web> &webs, const Graph<int> &graph, int colors, std::map<int, int> &assignment) {
+    return colorWithN(webs, graph, colors, std::set<int>(), assignment);
+}
+
+static std::vector<int> spillPriority(const std::vector<Web> &webs, const std::map<int, std::set<int>> &interference) {
+    std::vector<int> candidates;
+    for (const Web &web : webs) candidates.push_back(web.id);
+
+    std::sort(candidates.begin(), candidates.end(), [&](int a, int b) {
+        size_t degreeA = interference.at(a).size();
+        size_t degreeB = interference.at(b).size();
+        if (degreeA != degreeB) return degreeA > degreeB;
+
+        size_t liveA = webs[a].liveLines.size();
+        size_t liveB = webs[b].liveLines.size();
+        if (liveA != liveB) return liveA > liveB;
+
+        return a < b;
+    });
+
+    return candidates;
+}
+
+static bool nextCombination(std::vector<int> &indices, int n) {
+    int k = static_cast<int>(indices.size());
+    for (int i = k - 1; i >= 0; i--) {
+        if (indices[i] < n - k + i) {
+            indices[i]++;
+            for (int j = i + 1; j < k; j++) {
+                indices[j] = indices[j - 1] + 1;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool tryColoringUpToLimit(const ParsedInput &input, const std::set<int> &excludedWebs, int &registersUsed, std::map<int, int> &assignment) {
+    for (int colors = 1; colors <= input.settings.registers; colors++) {
+        if (colorWithN(input.webs, input.interferenceGraph, colors, excludedWebs, assignment)) {
+            registersUsed = colors;
+            return true;
+        }
+    }
+    return false;
+}
+
+static AllocationResult makeBaseResult(const ParsedInput &input) {
+    AllocationResult result;
+    result.webs = input.webs;
+    result.interference = graphToInterferenceMap(input.interferenceGraph);
+    return result;
+}
+
+static AllocationResult runBasicAllocation(const ParsedInput &input) {
+    AllocationResult result = makeBaseResult(input);
+    std::map<int, int> assignment;
+    int registersUsed = 0;
+
+    if (tryColoringUpToLimit(input, std::set<int>(), registersUsed, assignment)) {
+        result.success = true;
+        result.registersUsed = registersUsed;
+        result.webToRegister = assignment;
+        return result;
+    }
+
+    result.registersUsed = 0;
+    for (const Web &web : result.webs) {
+        result.spilledWebs.insert(web.id);
+    }
+    result.warning = "assignment to the provided number of registers was not possible";
+    return result;
+}
+
+static AllocationResult runSpillingAllocation(const ParsedInput &input) {
+    AllocationResult basicResult = runBasicAllocation(input);
+    if (basicResult.success) {
+        return basicResult;
+    }
+
+    AllocationResult result = makeBaseResult(input);
+    std::vector<int> candidates = spillPriority(input.webs, result.interference);
+    int maxSpills = std::min(input.settings.parameter, static_cast<int>(candidates.size()));
+
+    for (int spillCount = 1; spillCount <= maxSpills; spillCount++) {
+        std::vector<int> indices(spillCount);
+        for (int i = 0; i < spillCount; i++) indices[i] = i;
+
+        do {
+            std::set<int> excludedWebs;
+            for (int index : indices) {
+                excludedWebs.insert(candidates[index]);
+            }
+
+            std::map<int, int> assignment;
+            int registersUsed = 0;
+            if (tryColoringUpToLimit(input, excludedWebs, registersUsed, assignment)) {
+                result.success = true;
+                result.registersUsed = registersUsed;
+                result.webToRegister = assignment;
+                result.spilledWebs = excludedWebs;
+                result.warning = "web spilling used: selected highest-degree webs first to reduce interference";
+                return result;
+            }
+        } while (nextCombination(indices, static_cast<int>(candidates.size())));
+    }
+
+    result.registersUsed = 0;
+    for (const Web &web : result.webs) {
+        result.spilledWebs.insert(web.id);
+    }
+    result.warning = "assignment to the provided number of registers was not possible, even with the allowed web spilling";
+    return result;
+}
+
 ParsedInput loadInputData(const std::string &rangesPath, const std::string &registersPath) {
     ParsedInput input;
     input.ranges = parseRangesFile(rangesPath);
@@ -324,26 +483,15 @@ ParsedInput loadInputData(const std::string &rangesPath, const std::string &regi
 AllocationResult runAllocation(const std::string &rangesPath, const std::string &registersPath) {
     ParsedInput input = loadInputData(rangesPath, registersPath);
 
-    if (input.settings.algorithm != "basic") {
-        throw std::runtime_error("algorithm '" + input.settings.algorithm + "' is parsed but not implemented yet");
+    if (input.settings.algorithm == "basic") {
+        return runBasicAllocation(input);
     }
 
-    AllocationResult result;
-    result.webs = input.webs;
-    result.interference = graphToInterferenceMap(input.interferenceGraph);
-
-    for (int colors = 1; colors <= input.settings.registers; colors++) {
-        std::map<int, int> assignment;
-        if (colorWithN(result.webs, input.interferenceGraph, colors, assignment)) {
-            result.success = true;
-            result.registersUsed = colors;
-            result.webToRegister = assignment;
-            return result;
-        }
+    if (input.settings.algorithm == "spilling") {
+        return runSpillingAllocation(input);
     }
 
-    result.warning = "assignment to the provided number of registers was not possible";
-    return result;
+    throw std::runtime_error("algorithm '" + input.settings.algorithm + "' is parsed but not implemented yet");
 }
 
 std::string pointToString(const ProgramPoint &point) {
@@ -372,6 +520,9 @@ void printResult(std::ostream &out, const AllocationResult &result) {
     if (result.success) {
         for (const auto &entry : result.webToRegister) {
             out << "r" << entry.second << ": web" << entry.first << "\n";
+        }
+        for (int webId : result.spilledWebs) {
+            out << "M: web" << webId << "\n";
         }
     } else {
         for (const Web &web : result.webs) {
@@ -434,6 +585,11 @@ void printDetailedResult(const AllocationResult &result) {
 
     std::cout << "\nRegister allocation\n";
     printResult(std::cout, result);
+
+    if (!result.spilledWebs.empty() && result.success) {
+        std::cout << "\nSpilling rationale\n";
+        std::cout << "  Spilled webs are selected by descending interference degree, then by longer live range.\n";
+    }
 
     if (!result.warning.empty()) {
         std::cout << "\nWarning: " << result.warning << "\n";

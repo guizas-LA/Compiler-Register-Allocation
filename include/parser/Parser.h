@@ -64,6 +64,7 @@ struct AllocationResult {
     std::vector<Web> webs;
     std::map<int, std::set<int>> interference;
     std::map<int, int> webToRegister;
+    std::set<int> spilledWebs;
     std::string warning;
 };
 
@@ -75,6 +76,7 @@ std::vector<Web> buildWebs(const std::vector<LiveRange> &ranges);
 void buildInterferenceGraph(const std::vector<Web> &webs, Graph<int> &graph);
 std::map<int, std::set<int>> graphToInterferenceMap(const Graph<int> &graph);
 bool colorWithN(const std::vector<Web> &webs, const Graph<int> &graph, int colors, std::map<int, int> &assignment);
+bool colorWithN(const std::vector<Web> &webs, const Graph<int> &graph, int colors, const std::set<int> &excludedWebs, std::map<int, int> &assignment);
 ParsedInput loadInputData(const std::string &rangesPath, const std::string &registersPath);
 AllocationResult runAllocation(const std::string &rangesPath, const std::string &registersPath);
 

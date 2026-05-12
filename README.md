@@ -62,7 +62,7 @@ Errors and warnings are written to the console through `stderr`.
 
 ## Current Scope
 
-The T1.1 assignment tool is implemented with:
+The assignment tool is implemented with:
 
 - interactive command-line menu;
 - batch execution;
@@ -72,6 +72,44 @@ The T1.1 assignment tool is implemented with:
 - output file generation;
 - detailed result display;
 - basic graph-coloring allocation support.
+- web spilling allocation support.
+
+## Implemented Algorithms
+
+### Basic
+
+`algorithm: basic`
+
+The basic allocator tries to color the interference graph with the minimum number
+of registers from `1` up to the configured limit. For each number of registers it
+uses the simplification/stack strategy described in the project statement:
+
+- repeatedly remove a web whose active degree is lower than the number of
+  available colors;
+- push removed webs onto a stack;
+- if no such web exists, the graph is not colorable by the basic algorithm with
+  that register count;
+- pop the stack and assign the first register not used by already-colored
+  neighbors.
+
+If the graph cannot be colored with the provided number of registers, the output
+uses `registers: 0` and assigns every web to memory with `M`.
+
+### Spilling
+
+`algorithm: spilling, K`
+
+The spilling allocator first runs the basic allocator. If that fails, it tries to
+spill as few webs as possible, from `1` up to `K`.
+
+The spill heuristic sorts candidate webs by:
+
+1. highest interference degree first;
+2. longest live range as a tie-breaker;
+3. lowest web id as a final deterministic tie-breaker.
+
+Rationale: a high-degree web blocks many neighboring webs from sharing registers,
+so spilling it usually removes more constraints from the interference graph.
 
 ## Project Structure
 ```text
