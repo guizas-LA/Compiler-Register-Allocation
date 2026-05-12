@@ -1,0 +1,17 @@
+PROJECT_NAME           = "DA Project 2 - Register Allocation"
+PROJECT_BRIEF          = "Compiler register allocation assignment tool"
+OUTPUT_DIRECTORY       = docs
+INPUT                  = include src data_structures
+RECURSIVE              = YES
+FILE_PATTERNS          = *.cpp *.h
+EXTRACT_ALL            = YES
+EXTRACT_STATIC         = YES
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+QUIET                  = YES
+WARN_IF_UNDOCUMENTED   = NO
+WARN_IF_DOC_ERROR      = YES
+JAVADOC_AUTOBRIEF      = YES
+OPTIMIZE_OUTPUT_FOR_C  = YES
+HAVE_DOT               = NO
+ALIASES                += complexity="@par Time Complexity:"

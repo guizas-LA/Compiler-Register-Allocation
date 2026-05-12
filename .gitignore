@@ -4,13 +4,13 @@
 *.exe
 *.out
 *.app
+myProg
 
 # --- Doxygen Output ---
 html/
 latex/
 docs/
 doxygen_sqlite3.db
-Doxyfile
 
 
 # --- Build Systems ---
@@ -18,7 +18,6 @@ cmake-build-debug/
 cmake-build-release/
 CMakeCache.txt
 CMakeFiles/
-Makefile
 cmake_install.cmake
 
 # --- IDEs & Editors ---
@@ -30,4 +29,3 @@ cmake_install.cmake
 # --- OS generated files ---
 .DS_Store
 Thumbs.db
-
