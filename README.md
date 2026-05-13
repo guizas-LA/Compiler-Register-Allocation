@@ -111,6 +111,28 @@ The spill heuristic sorts candidate webs by:
 Rationale: a high-degree web blocks many neighboring webs from sharing registers,
 so spilling it usually removes more constraints from the interference graph.
 
+### Splitting
+
+`algorithm: splitting, K`
+
+The splitting allocator first runs the basic allocator. If that fails, it tries
+to split as few webs as possible, from `1` up to `K`.
+
+The split heuristic uses the same priority as spilling:
+
+1. highest interference degree first;
+2. longest live range as a tie-breaker;
+3. lowest web id as a deterministic tie-breaker.
+
+Each selected web is split into two ordered sections around the midpoint of its
+program points. The first derived web is marked as ending at the split boundary,
+and the second is marked as beginning there. The interference graph is rebuilt
+for the derived webs and the basic coloring algorithm is retried.
+
+Rationale: high-degree, long webs are the best candidates because splitting them
+can distribute their interferences across smaller derived webs, often turning a
+dense graph into a colorable one without sending values to memory.
+
 ## Project Structure
 ```text
 proj/

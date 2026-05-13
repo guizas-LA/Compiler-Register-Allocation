@@ -471,6 +471,114 @@ static AllocationResult runSpillingAllocation(const ParsedInput &input) {
     return result;
 }
 
+static ParsedInput inputWithWebs(const ParsedInput &input, const std::vector<Web> &webs) {
+    ParsedInput changed = input;
+    changed.webs = webs;
+    changed.interferenceGraph = Graph<int>();
+    buildInterferenceGraph(changed.webs, changed.interferenceGraph);
+    return changed;
+}
+
+static std::vector<Web> renumberWebs(std::vector<Web> webs) {
+    for (size_t i = 0; i < webs.size(); i++) {
+        webs[i].id = static_cast<int>(i);
+    }
+    return webs;
+}
+
+static bool splitSingleWeb(const Web &web, Web &first, Web &second) {
+    if (web.points.size() < 2) {
+        return false;
+    }
+
+    size_t splitPoint = web.points.size() / 2;
+    if (splitPoint == 0 || splitPoint >= web.points.size()) {
+        return false;
+    }
+
+    first = web;
+    second = web;
+    first.points.assign(web.points.begin(), web.points.begin() + static_cast<long>(splitPoint));
+    second.points.assign(web.points.begin() + static_cast<long>(splitPoint), web.points.end());
+
+    first.points.back().ends = true;
+    second.points.front().begins = true;
+
+    first.liveLines.clear();
+    second.liveLines.clear();
+    for (const ProgramPoint &point : first.points) first.liveLines.insert(point.line);
+    for (const ProgramPoint &point : second.points) second.liveLines.insert(point.line);
+
+    return true;
+}
+
+static std::vector<Web> splitSelectedWebs(const std::vector<Web> &webs, const std::set<int> &selectedWebs) {
+    std::vector<Web> result;
+
+    for (const Web &web : webs) {
+        if (!selectedWebs.count(web.id)) {
+            result.push_back(web);
+            continue;
+        }
+
+        Web first;
+        Web second;
+        if (splitSingleWeb(web, first, second)) {
+            result.push_back(first);
+            result.push_back(second);
+        } else {
+            result.push_back(web);
+        }
+    }
+
+    return renumberWebs(result);
+}
+
+static AllocationResult runSplittingAllocation(const ParsedInput &input) {
+    AllocationResult basicResult = runBasicAllocation(input);
+    if (basicResult.success) {
+        return basicResult;
+    }
+
+    std::map<int, std::set<int>> interference = graphToInterferenceMap(input.interferenceGraph);
+    std::vector<int> candidates = spillPriority(input.webs, interference);
+    candidates.erase(
+        std::remove_if(candidates.begin(), candidates.end(), [&](int webId) {
+            return input.webs[webId].points.size() < 2;
+        }),
+        candidates.end()
+    );
+
+    int maxSplits = std::min(input.settings.parameter, static_cast<int>(candidates.size()));
+    for (int splitCount = 1; splitCount <= maxSplits; splitCount++) {
+        std::vector<int> indices(splitCount);
+        for (int i = 0; i < splitCount; i++) indices[i] = i;
+
+        do {
+            std::set<int> selectedWebs;
+            for (int index : indices) {
+                selectedWebs.insert(candidates[index]);
+            }
+
+            std::vector<Web> splitWebs = splitSelectedWebs(input.webs, selectedWebs);
+            ParsedInput changed = inputWithWebs(input, splitWebs);
+            AllocationResult result = runBasicAllocation(changed);
+            if (result.success) {
+                result.warning = "web splitting used: selected highest-degree, longest live webs first";
+                return result;
+            }
+        } while (nextCombination(indices, static_cast<int>(candidates.size())));
+    }
+
+    AllocationResult result = makeBaseResult(input);
+    result.registersUsed = 0;
+    for (const Web &web : result.webs) {
+        result.spilledWebs.insert(web.id);
+    }
+    result.warning = "assignment to the provided number of registers was not possible, even with the allowed web splitting";
+    return result;
+}
+
 ParsedInput loadInputData(const std::string &rangesPath, const std::string &registersPath) {
     ParsedInput input;
     input.ranges = parseRangesFile(rangesPath);
@@ -489,6 +597,10 @@ AllocationResult runAllocation(const std::string &rangesPath, const std::string 
 
     if (input.settings.algorithm == "spilling") {
         return runSpillingAllocation(input);
+    }
+
+    if (input.settings.algorithm == "splitting") {
+        return runSplittingAllocation(input);
     }
 
     throw std::runtime_error("algorithm '" + input.settings.algorithm + "' is parsed but not implemented yet");
