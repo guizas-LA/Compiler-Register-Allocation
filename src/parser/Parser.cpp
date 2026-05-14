@@ -579,6 +579,137 @@ static AllocationResult runSplittingAllocation(const ParsedInput &input) {
     return result;
 }
 
+static int saturationDegree(int webId, const std::map<int, std::set<int>> &interference, const std::map<int, int> &assignment) {
+    std::set<int> neighborColors;
+    for (int neighbor : interference.at(webId)) {
+        auto it = assignment.find(neighbor);
+        if (it != assignment.end()) {
+            neighborColors.insert(it->second);
+        }
+    }
+    return static_cast<int>(neighborColors.size());
+}
+
+static int chooseDsaturVertex(const std::set<int> &active, const std::map<int, std::set<int>> &interference, const std::map<int, int> &assignment) {
+    int selected = -1;
+    int bestSaturation = -1;
+    int bestDegree = -1;
+
+    for (int webId : active) {
+        if (assignment.count(webId)) continue;
+
+        int saturation = saturationDegree(webId, interference, assignment);
+        int degree = activeDegree(webId, interference, active);
+
+        if (selected == -1 || saturation > bestSaturation ||
+            (saturation == bestSaturation && degree > bestDegree) ||
+            (saturation == bestSaturation && degree == bestDegree && webId < selected)) {
+            selected = webId;
+            bestSaturation = saturation;
+            bestDegree = degree;
+        }
+    }
+
+    return selected;
+}
+
+static bool dsaturBacktrack(const std::set<int> &active, const std::map<int, std::set<int>> &interference, int colors, std::map<int, int> &assignment) {
+    if (assignment.size() == active.size()) {
+        return true;
+    }
+
+    int webId = chooseDsaturVertex(active, interference, assignment);
+    if (webId == -1) {
+        return true;
+    }
+
+    std::set<int> unavailable;
+    for (int neighbor : interference.at(webId)) {
+        auto it = assignment.find(neighbor);
+        if (it != assignment.end()) {
+            unavailable.insert(it->second);
+        }
+    }
+
+    for (int color = 0; color < colors; color++) {
+        if (unavailable.count(color)) continue;
+
+        assignment[webId] = color;
+        if (dsaturBacktrack(active, interference, colors, assignment)) {
+            return true;
+        }
+        assignment.erase(webId);
+    }
+
+    return false;
+}
+
+static bool dsaturColorWithN(const std::vector<Web> &webs, const Graph<int> &graph, int colors, const std::set<int> &excludedWebs, std::map<int, int> &assignment) {
+    std::map<int, std::set<int>> interference = graphToInterferenceMap(graph);
+    std::set<int> active;
+    for (const Web &web : webs) {
+        if (!excludedWebs.count(web.id)) {
+            active.insert(web.id);
+        }
+    }
+
+    assignment.clear();
+    return dsaturBacktrack(active, interference, colors, assignment);
+}
+
+static bool tryDsaturUpToLimit(const ParsedInput &input, const std::set<int> &excludedWebs, int &registersUsed, std::map<int, int> &assignment) {
+    for (int colors = 1; colors <= input.settings.registers; colors++) {
+        if (dsaturColorWithN(input.webs, input.interferenceGraph, colors, excludedWebs, assignment)) {
+            registersUsed = colors;
+            return true;
+        }
+    }
+    return false;
+}
+
+static AllocationResult runFreeAllocation(const ParsedInput &input) {
+    AllocationResult result = makeBaseResult(input);
+    std::map<int, int> assignment;
+    int registersUsed = 0;
+
+    if (tryDsaturUpToLimit(input, std::set<int>(), registersUsed, assignment)) {
+        result.success = true;
+        result.registersUsed = registersUsed;
+        result.webToRegister = assignment;
+        result.warning = "free algorithm used DSATUR backtracking";
+        return result;
+    }
+
+    std::vector<int> candidates = spillPriority(input.webs, result.interference);
+    for (int spillCount = 1; spillCount <= static_cast<int>(candidates.size()); spillCount++) {
+        std::vector<int> indices(spillCount);
+        for (int i = 0; i < spillCount; i++) indices[i] = i;
+
+        do {
+            std::set<int> excludedWebs;
+            for (int index : indices) {
+                excludedWebs.insert(candidates[index]);
+            }
+
+            if (tryDsaturUpToLimit(input, excludedWebs, registersUsed, assignment)) {
+                result.success = true;
+                result.registersUsed = registersUsed;
+                result.webToRegister = assignment;
+                result.spilledWebs = excludedWebs;
+                result.warning = "free algorithm used DSATUR backtracking with minimum-count heuristic spilling";
+                return result;
+            }
+        } while (nextCombination(indices, static_cast<int>(candidates.size())));
+    }
+
+    result.registersUsed = 0;
+    for (const Web &web : result.webs) {
+        result.spilledWebs.insert(web.id);
+    }
+    result.warning = "free allocation could not find a valid assignment";
+    return result;
+}
+
 ParsedInput loadInputData(const std::string &rangesPath, const std::string &registersPath) {
     ParsedInput input;
     input.ranges = parseRangesFile(rangesPath);
@@ -601,6 +732,10 @@ AllocationResult runAllocation(const std::string &rangesPath, const std::string 
 
     if (input.settings.algorithm == "splitting") {
         return runSplittingAllocation(input);
+    }
+
+    if (input.settings.algorithm == "free") {
+        return runFreeAllocation(input);
     }
 
     throw std::runtime_error("algorithm '" + input.settings.algorithm + "' is parsed but not implemented yet");
@@ -704,7 +839,7 @@ void printDetailedResult(const AllocationResult &result) {
     }
 
     if (!result.warning.empty()) {
-        std::cout << "\nWarning: " << result.warning << "\n";
+        std::cout << "\n" << (result.success ? "Info: " : "Warning: ") << result.warning << "\n";
     }
 }
 

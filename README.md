@@ -133,6 +133,29 @@ Rationale: high-degree, long webs are the best candidates because splitting them
 can distribute their interferences across smaller derived webs, often turning a
 dense graph into a colorable one without sending values to memory.
 
+### Free
+
+`algorithm: free`
+
+The free allocator uses a DSATUR-based search:
+
+- at each step it selects the uncolored web with the highest saturation degree,
+  meaning the highest number of distinct colors already used by its neighbors;
+- ties are broken by higher interference degree and then lower web id;
+- it uses backtracking, so it can recover from an unlucky color choice;
+- it tries to use the minimum number of registers from `1` up to the configured
+  register limit.
+
+If DSATUR cannot color the graph with the configured number of registers, the
+free allocator applies a fallback spilling strategy. It tries to spill as few
+webs as possible, using the same high-degree/long-live-range priority as the
+spilling algorithm, and runs DSATUR again on the reduced graph.
+
+Rationale: DSATUR tends to color constrained graphs more effectively than a
+plain greedy order because it reacts dynamically to the colors already assigned
+around each web. The fallback keeps the result valid even when the graph cannot
+be colored within the available registers.
+
 ## Project Structure
 ```text
 proj/
