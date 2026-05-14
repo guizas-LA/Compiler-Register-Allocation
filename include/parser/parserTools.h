@@ -3,29 +3,32 @@
 
 #include <string>
 #include <vector>
+using namespace std;
 
 /**
  * @brief Remove leading and trailing whitespace.
  * @complexity O(n), where n is the size of the input string.
  */
-std::string trim(const std::string &value);
+string trim(const string &value);
 
 /**
  * @brief Remove inline comments beginning with '#'.
  * @complexity O(n), where n is the size of the input line.
  */
-std::string stripComment(const std::string &line);
+string stripComment(const string &line);
 
 /**
  * @brief Split a string by a delimiter and trim all resulting tokens.
  * @complexity O(n), where n is the size of the input string.
  */
-std::vector<std::string> split(const std::string &text, char delimiter);
+vector<string> split(const string &text, char delimiter);
 
 /**
  * @brief Check whether a file can be opened for reading.
  * @complexity O(1) excluding filesystem overhead.
  */
-bool fileExists(const std::string &path);
+bool fileExists(const string &path);
+
+bool isDigits(const string &text);
 
 #endif

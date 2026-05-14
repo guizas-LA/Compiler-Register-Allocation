@@ -7,6 +7,7 @@
  */
 
 #include "UFDS.h"
+using namespace std;
 
 UFDS::UFDS(unsigned int N) {
     path.resize(N);

@@ -2,6 +2,7 @@
 // Based on MutablePriorityQueue.h
 
 #include "Heap.h"
+using namespace std;
 
 // Index calculations
 #define parent(i) ((i) / 2)
@@ -13,7 +14,7 @@ Heap::Heap() {
 	// to facilitate parent/child calculations
 }
 
-Heap::Heap(std::vector<int> v): Heap() {
+Heap::Heap(vector<int> v): Heap() {
     // Add the elements to the vector without respecting the heap property
     elems.insert(elems.end(),v.begin(),v.end());
 

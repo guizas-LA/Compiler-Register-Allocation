@@ -5,16 +5,17 @@
 #define DA_TP_CLASSES_HEAP
 
 #include <vector>
+using namespace std;
 
 class Heap {
 public:
     Heap();
-    Heap(std::vector<int> v);
+    Heap(vector<int> v);
 	void insert(int x);
 	int extractMin();
 	bool empty();
 private:
-    std::vector<int> elems;
+    vector<int> elems;
     void heapifyUp(unsigned int i);
     void heapifyDown(unsigned int i);
 };

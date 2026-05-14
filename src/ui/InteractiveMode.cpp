@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+using namespace std;
+
 #include "parser/Parser.h"
 #include "parser/parserTools.h"
 #include "ui/Menu.h"
@@ -12,9 +14,9 @@
 
 void interactiveMenu() {
     int option;
-    std::string rangesPath;
-    std::string registersPath;
-    std::string outputPath;
+    string rangesPath;
+    string registersPath;
+    string outputPath;
     ParsedInput lastInput;
     bool hasInput = false;
     bool hasResult = false;
@@ -25,11 +27,11 @@ void interactiveMenu() {
 
         showMenu();
 
-        std::cin >> option;
-        if (std::cin.fail()) {
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            std::cerr << "Error: invalid menu option\n";
+        cin >> option;
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cerr << "Error: invalid menu option\n";
             continue;
         }
 
@@ -38,7 +40,7 @@ void interactiveMenu() {
                     rangesPath = askPath("Ranges file: ");
                     rangesPath = resolvePath(rangesPath, {"basic/ranges", "basic"});
                     if (!fileExists(rangesPath)) {
-                        std::cerr << "Warning: file does not exist yet: " << rangesPath << "\n";
+                        cerr << "Warning: file does not exist yet: " << rangesPath << "\n";
                     } else {
                         showFileContent(rangesPath);
                     }
@@ -48,7 +50,7 @@ void interactiveMenu() {
                     registersPath = askPath("Registers file: ");
                     registersPath = resolvePath(registersPath, {"basic/registers", "basic"});
                     if (!fileExists(registersPath)) {
-                        std::cerr << "Warning: file does not exist yet: " << registersPath << "\n";
+                        cerr << "Warning: file does not exist yet: " << registersPath << "\n";
                     } else {
                         showFileContent(registersPath);
                     }
@@ -71,7 +73,7 @@ void interactiveMenu() {
                     lastInput = loadInputData(rangesPath, registersPath);
                     hasInput = true;
                     printParsedInput(lastInput);
-                    std::cout << "\nInput data loaded and validated successfully.\n";
+                    cout << "\nInput data loaded and validated successfully.\n";
                     break;
 
                 case 5:
@@ -87,7 +89,7 @@ void interactiveMenu() {
                     hasResult = true;
                     printDetailedResult(lastResult);
                     if (!lastResult.success) {
-                        std::cerr << "Warning: " << lastResult.warning << "\n";
+                        cerr << "Warning: " << lastResult.warning << "\n";
                     }
                     break;
 
@@ -96,7 +98,7 @@ void interactiveMenu() {
                         if (hasInput) {
                             printParsedInput(lastInput);
                         } else {
-                            std::cout << "No input has been loaded and no allocation has been run yet.\n";
+                            cout << "No input has been loaded and no allocation has been run yet.\n";
                         }
                     } else {
                         printDetailedResult(lastResult);
@@ -105,20 +107,20 @@ void interactiveMenu() {
 
                 case 7:
                     if (!hasResult) {
-                        std::cout << "No allocation has been run yet.\n";
+                        cout << "No allocation has been run yet.\n";
                     } else {
                         if (outputPath.empty()) {
                             outputPath = askPath("Output file: ");
                             outputPath = resolvePath(outputPath, {"basic/output", "basic"});
                         }
                         writeResultFile(outputPath, lastResult);
-                        std::cout << "Saved allocation to " << outputPath << "\n";
+                        cout << "Saved allocation to " << outputPath << "\n";
                     }
                     break;
                 case 0:
                     return;
                 default:
-                    std::cerr << "Error: invalid menu option\n";
+                    cerr << "Error: invalid menu option\n";
                     break;
             }
     }

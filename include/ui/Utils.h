@@ -3,8 +3,9 @@
 
 #include <string>
 #include <vector>
+using namespace std;
 
-std::string resolvePath(const std::string &path, const std::vector<std::string> &searchDirs);
-void showFileContent(const std::string &path);
+string resolvePath(const string &path, const vector<string> &searchDirs);
+void showFileContent(const string &path);
 
 #endif
