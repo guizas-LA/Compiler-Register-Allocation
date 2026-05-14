@@ -2,7 +2,7 @@ CXX ?= g++
 CXXFLAGS ?= -std=c++17 -Wall -Wextra -pedantic -Iinclude -I.
 
 TARGET = myProg
-SOURCES = src/ui/main.cpp src/ui/BatchMode.cpp src/ui/InteractiveMode.cpp src/ui/Menu.cpp src/ui/utils.cpp src/parser/Parser.cpp src/parser/parserTools.cpp src/Algorithms/Allocation.cpp data_structures/Heap.cpp data_structures/UFDS.cpp
+SOURCES = src/ui/main.cpp src/ui/BatchMode.cpp src/ui/InteractiveMode.cpp src/ui/Menu.cpp src/ui/utils.cpp src/parser/Parser.cpp src/parser/ParserTools.cpp src/Algorithms/Allocation.cpp data_structures/Heap.cpp data_structures/UFDS.cpp
 
 .PHONY: all clean run docs
 
