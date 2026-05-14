@@ -9,4 +9,9 @@
  */
 std::string askPath(const std::string &label);
 
+/**
+ * @brief Display the interactive menu options.
+ */
+void showMenu();
+
 #endif
