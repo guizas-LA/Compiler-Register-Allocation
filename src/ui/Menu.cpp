@@ -9,11 +9,10 @@ void showMenu() {
     cout << "=======================================\n";
     cout << "| 1 - Set ranges file                 |\n";
     cout << "| 2 - Set registers file              |\n";
-    cout << "| 3 - Set output file                 |\n";
-    cout << "| 4 - Load and validate input data    |\n";
-    cout << "| 5 - Run allocation                  |\n";
-    cout << "| 6 - Show last result                |\n";
-    cout << "| 7 - Save last result                |\n";
+    cout << "| 3 - Build webs & interference graph |\n";
+    cout << "| 4 - Run allocation                  |\n";
+    cout << "| 5 - Display results                 |\n";
+    cout << "| 6 - Export output file              |\n";
     cout << "| 0 - Exit                            |\n";
     cout << "=======================================\n";
     cout << "\nChoice: ";

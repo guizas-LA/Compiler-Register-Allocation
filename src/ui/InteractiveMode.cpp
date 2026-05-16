@@ -18,8 +18,8 @@ void interactiveMenu() {
     string registersPath;
     string outputPath;
     ParsedInput lastInput;
-    bool hasInput = false;
-    bool hasResult = false;
+    bool hasResultW = false;
+    bool hasResultA = false;
     AllocationResult lastResult;
     
 
@@ -57,8 +57,16 @@ void interactiveMenu() {
                     break;
 
                 case 3:
-                    outputPath = askPath("Output file: ");
-                    outputPath = resolvePath(outputPath, {"basic/output", "basic"});
+                    if (rangesPath.empty()) {
+                        rangesPath = askPath("Ranges file: ");
+                        rangesPath = resolvePath(rangesPath, {"basic/ranges", "basic"});
+                    }
+                    if (registersPath.empty()) {
+                        registersPath = askPath("Registers file: ");
+                        registersPath = resolvePath(registersPath, {"basic/registers", "basic"});
+                    }
+                    lastInput = loadInputData(rangesPath, registersPath);
+                    hasResultW = true;
                     break;
 
                 case 4:
@@ -70,48 +78,29 @@ void interactiveMenu() {
                         registersPath = askPath("Registers file: ");
                         registersPath = resolvePath(registersPath, {"basic/registers", "basic"});
                     }
-                    lastInput = loadInputData(rangesPath, registersPath);
-                    hasInput = true;
-                    printParsedInput(lastInput);
-                    cout << "\nInput data loaded and validated successfully.\n";
+                    lastResult = runAllocation(rangesPath, registersPath);
+                    hasResultA = true;
                     break;
 
                 case 5:
-                    if (rangesPath.empty()) {
-                        rangesPath = askPath("Ranges file: ");
-                        rangesPath = resolvePath(rangesPath, {"basic/ranges", "basic"});
-                    }
-                    if (registersPath.empty()) {
-                        registersPath = askPath("Registers file: ");
-                        registersPath = resolvePath(registersPath, {"basic/registers", "basic"});
-                    }
-                    lastResult = runAllocation(rangesPath, registersPath);
-                    hasResult = true;
-                    printDetailedResult(lastResult);
-                    if (!lastResult.success) {
-                        cerr << "Warning: " << lastResult.warning << "\n";
-                    }
-                    break;
-
-                case 6:
-                    if (!hasResult) {
-                        if (hasInput) {
-                            printParsedInput(lastInput);
-                        } else {
-                            cout << "No input has been loaded and no allocation has been run yet.\n";
-                        }
+                    if (!hasResultW || !hasResultA) {
+                        cout << "Build webs & interference graph (option 3) and run allocation (option 4) first.\n";
                     } else {
                         printDetailedResult(lastResult);
                     }
                     break;
 
-                case 7:
-                    if (!hasResult) {
-                        cout << "No allocation has been run yet.\n";
+                case 6:
+                    if (!hasResultA) {
+                        cout << "Run allocation (option 4) first.\n";
                     } else {
                         if (outputPath.empty()) {
                             outputPath = askPath("Output file: ");
-                            outputPath = resolvePath(outputPath, {"basic/output", "basic"});
+                            if (outputPath.find('/') == string::npos && outputPath.find('\\') == string::npos) {
+                                outputPath = "basic/output/" + outputPath;
+                            } else {
+                                outputPath = resolvePath(outputPath, {"basic/output", "basic"});
+                            }
                         }
                         writeResultFile(outputPath, lastResult);
                         cout << "Saved allocation to " << outputPath << "\n";
