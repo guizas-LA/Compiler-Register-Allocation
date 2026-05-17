@@ -283,12 +283,15 @@ string webPointsToString(const Web &web) {
 }
 
 void printResult(ostream &out, const AllocationResult &result) {
+    out << "# Total number of webs followed by the listing of the program points of each one\n";
+    out << "# program points in each web are sorted in ascending order\n";
     out << "webs: " << result.webs.size() << "\n";
     for (const Web &web : result.webs) {
         out << "web" << web.id << ": " << webPointsToString(web) << "\n";
     }
 
-    out << "\nregisters: " << result.registersUsed << "\n";
+    out << "# Total number of registers used, followed by assignment to webs\n";
+    out << "registers: " << result.registersUsed << "\n";
     if (result.success) {
         for (const auto &entry : result.webToRegister) {
             out << "r" << entry.second << ": web" << entry.first << "\n";
@@ -355,7 +358,7 @@ void printDetailedResult(const AllocationResult &result) {
         cout << "\n";
     }
 
-    cout << "\nRegister allocation\n";
+    cout << "\nRegister allocation\n\n";
     printResult(cout, result);
 
     if (!result.spilledWebs.empty() && result.success) {
