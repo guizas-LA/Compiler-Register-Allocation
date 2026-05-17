@@ -1,4 +1,4 @@
-# DA-Proj2
+# DA Project 2 T04 G08
 
 Compiler register allocation assignment tool for DA Project 2.
 
@@ -60,19 +60,6 @@ Example:
 
 Errors and warnings are written to the console through `stderr`.
 
-## Current Scope
-
-The assignment tool is implemented with:
-
-- interactive command-line menu;
-- batch execution;
-- input validation;
-- parsed input data structures;
-- interference graph based on the provided `Graph` class;
-- output file generation;
-- detailed result display;
-- basic graph-coloring allocation support.
-- web spilling allocation support.
 
 ## Implemented Algorithms
 
@@ -180,3 +167,4 @@ proj/
 ├── data_structures/          # Provided graph/auxiliary structures
 └── .gitignore                # Git ignore rules
 ```
+
