@@ -6,12 +6,6 @@
 *.app
 myProg
 
-# --- Doxygen Output ---
-html/
-latex/
-docs/
-doxygen_sqlite3.db
-
 
 # --- Build Systems ---
 cmake-build-debug/

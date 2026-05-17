@@ -80,6 +80,12 @@ The assignment tool is implemented with:
 
 `algorithm: basic`
 
+Time complexity:
+- build webs: O(W² · P)
+- build interference graph: O(V · (V + E))
+- single color attempt: O(V · R)
+- basic allocator: O(V · R²)
+
 The basic allocator tries to color the interference graph with the minimum number
 of registers from `1` up to the configured limit. For each number of registers it
 uses the simplification/stack strategy described in the project statement:
@@ -99,6 +105,8 @@ uses `registers: 0` and assigns every web to memory with `M`.
 
 `algorithm: spilling, K`
 
+Time complexity: O(K · V · (V + E))
+
 The spilling allocator first runs the basic allocator. If that fails, it tries to
 spill as few webs as possible, from `1` up to `K`.
 
@@ -114,6 +122,8 @@ so spilling it usually removes more constraints from the interference graph.
 ### Splitting
 
 `algorithm: splitting, K`
+
+Time complexity: O(K · V · (V + E))
 
 The splitting allocator first runs the basic allocator. If that fails, it tries
 to split as few webs as possible, from `1` up to `K`.
@@ -136,6 +146,8 @@ dense graph into a colorable one without sending values to memory.
 ### Free
 
 `algorithm: free`
+
+Time complexity: O(V² + V · E)
 
 The free allocator uses a DSATUR-based search:
 
