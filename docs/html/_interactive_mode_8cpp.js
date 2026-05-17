@@ -1,4 +1,0 @@
-var _interactive_mode_8cpp =
-[
-    [ "interactiveMenu", "_interactive_mode_8cpp.html#ac223e0d6926036c89a1ee0f1f4ad6ac6", null ]
-];

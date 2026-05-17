@@ -1,5 +1,0 @@
-var searchData=
-[
-  ['choosedsaturvertex_0',['chooseDsaturVertex',['../_parser_8cpp.html#a8f8b65771d4a02fcc1dab1bb596b5c5e',1,'Parser.cpp']]],
-  ['colorwithn_1',['colorWithN',['../_parser_8h.html#a6cf0c72ada8a4029911a716a76c54c71',1,'colorWithN(const std::vector&lt; Web &gt; &amp;webs, const Graph&lt; int &gt; &amp;graph, int colors, std::map&lt; int, int &gt; &amp;assignment):&#160;Parser.cpp'],['../_parser_8h.html#a0c737fdcda21622043d896f83002bd2c',1,'colorWithN(const std::vector&lt; Web &gt; &amp;webs, const Graph&lt; int &gt; &amp;graph, int colors, const std::set&lt; int &gt; &amp;excludedWebs, std::map&lt; int, int &gt; &amp;assignment):&#160;Parser.cpp'],['../_parser_8cpp.html#a0c737fdcda21622043d896f83002bd2c',1,'colorWithN(const std::vector&lt; Web &gt; &amp;webs, const Graph&lt; int &gt; &amp;graph, int colors, const std::set&lt; int &gt; &amp;excludedWebs, std::map&lt; int, int &gt; &amp;assignment):&#160;Parser.cpp'],['../_parser_8cpp.html#a6cf0c72ada8a4029911a716a76c54c71',1,'colorWithN(const std::vector&lt; Web &gt; &amp;webs, const Graph&lt; int &gt; &amp;graph, int colors, std::map&lt; int, int &gt; &amp;assignment):&#160;Parser.cpp']]]
-];
