@@ -6,7 +6,6 @@
 *.app
 myProg
 
-
 # --- Build Systems ---
 cmake-build-debug/
 cmake-build-release/
@@ -23,3 +22,6 @@ cmake_install.cmake
 # --- OS generated files ---
 .DS_Store
 Thumbs.db
+ 
+# --- Documentation output ---
+.docs
